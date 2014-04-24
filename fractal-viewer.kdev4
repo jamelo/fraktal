@@ -1,0 +1,4 @@
+[Project]
+Name=fractal-viewer
+Manager=KDevCMakeManager
+VersionControl=kdevgit
