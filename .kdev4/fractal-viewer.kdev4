@@ -14,5 +14,45 @@ Environment Profile=default
 Extra Arguments=
 Install Directory=file:///home/jmelo/bin
 
+[Launch]
+Launch Configurations=Launch Configuration 0,Launch Configuration 1
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=New Application Launcher
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Arguments=
+Debugger Shell=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x1c\x00f\x00r\x00a\x00c\x00t\x00a\x00l\x00-\x00v\x00i\x00e\x00w\x00e\x00r)
+Dependency Action=Install
+Display Demangle Names=true
+Display Static Members=false
+EnvironmentGroup=default
+Executable=file:///home/jmelo/projects/fractal-viewer/build/fractal-viewer
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+GDB Path=
+Project Target=fractal-viewer,fractal-viewer
+Remote GDB Config Script=
+Remote GDB Run Script=
+Remote GDB Shell Script=
+Start With=ApplicationOutput
+Use External Terminal=false
+Working Directory=file:///home/jmelo/projects/fractal-viewer/
+isExecutable=false
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=fractal-viewer
+Type=Native Application
+
+[Launch][Launch Configuration 1][Data]
+Project Target=fractal-viewer,fractal-viewer
+Working Directory=file:///home/jmelo/projects/fractal-viewer/build/
+isExecutable=false
+
 [Project]
 VersionControlSupport=kdevgit
