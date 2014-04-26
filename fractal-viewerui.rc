@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gui name="tutorial" version="8"
+     xmlns="http://www.kde.org/standards/kxmlgui/1.0"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.kde.org/standards/kxmlgui/1.0
+                         http://www.kde.org/standards/kxmlgui/1.0/kxmlgui.xsd" >
+
+    <MenuBar>
+        <Menu name="file">
+            <Action name="actionRender" />
+            <Action name="actionStop" />
+        </Menu>
+        <Menu name="view">
+            <Action name="actionZoomIn" />
+            <Action name="actionZoomOut" />
+            <Action name="actionZoomReset" />
+            <Separator />
+            <Action name="actionColors" />
+            <Action name="actionAntialiasing" />
+        </Menu>
+    </MenuBar>
+
+    <ToolBar name="mainToolBar">
+        <text>Main Toolbar</text>
+        <Action name="actionRender" />
+        <Action name="actionZoomIn" />
+        <Action name="actionZoomOut" />
+        <Action name="actionZoomReset" />
+    </ToolBar>
+
+    <State name="rendering">
+        <enable>
+            <Action name="actionStop" />
+        </enable>
+        <disable>
+            <Action name="actionRender" />
+            <Action name="actionZoomIn" />
+            <Action name="actionZoomOut" />
+            <Action name="actionZoomReset" />
+            <Action name="actionColors" />
+            <Action name="actionAntialiasing" />
+        </disable>
+    </State>
+
+    <State name="calculatingPreview">
+        <enable>
+            <Action name="actionStop" />
+        </enable>
+    </State>
+
+    <State name="idle">
+        <enable>
+            <Action name="actionRender" />
+            <Action name="actionZoomIn" />
+            <Action name="actionZoomOut" />
+            <Action name="actionZoomReset" />
+            <Action name="actionColors" />
+            <Action name="actionAntialiasing" />
+        </enable>
+        <disable>
+            <Action name="actionStop" />
+        </disable>
+    </State>
+</gui>

@@ -3,6 +3,8 @@
 #include <KCmdLineArgs>
 #include <KUrl>
 
+#include "MainWindow.h"
+
 int main(int argc, char** argv)
 {
     KAboutData aboutData(
@@ -26,14 +28,10 @@ int main(int argc, char** argv)
 
     KApplication app;
 
-    //MainWindow* window = new MainWindow();
-    //window->show();
+    MainWindow* window = new MainWindow();
+    window->show();
 
     KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
-
-    if (args->count()) {
-        //window->openFile(args->url(0).url());
-    }
 
     return app.exec();
 }
