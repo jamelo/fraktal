@@ -1,2 +1,0 @@
-/home/jmelo/projects/fractal-viewer/build/CMakeFiles/fractal-viewer.dir
-/home/jmelo/projects/fractal-viewer/build/CMakeFiles/uninstall.dir
