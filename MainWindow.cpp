@@ -20,6 +20,8 @@
 #include <QPixmap>
 
 #include "Wrapper.h"
+#include "RenderParams.h"
+#include "Canvas.h"
 
 MainWindow::MainWindow(QWidget* parent) :
     KXmlGuiWindow(parent),
@@ -27,9 +29,7 @@ MainWindow::MainWindow(QWidget* parent) :
     m_colorScheme(ColorScheme::Grey),
     m_zoomRegion(ZoomRegion(-2, -1, 1, 1)),
     m_canvas(nullptr),
-    m_progressBar(nullptr),
-    m_image(nullptr),
-    m_backgroundWorker(nullptr)
+    m_progressBar(nullptr)
 {
     this->setupWidgets();
     this->setupActions();
@@ -37,19 +37,13 @@ MainWindow::MainWindow(QWidget* parent) :
 
     this->stateChanged("idle");
 
-    m_image = new QImage(m_canvas->width(), m_canvas->height(), QImage::Format_RGB888);
-
-    m_backgroundWorker = new BackgroundWorker(this);
-    connect(m_backgroundWorker, SIGNAL(taskComplete()), this, SLOT(previewComplete()));
-    connect(m_backgroundWorker, SIGNAL(progressUpdate(int)), m_progressBar, SLOT(setValue(int)));
-
-    renderPreview();
+    connect(m_canvas->backgroundWorker(), SIGNAL(taskStart()), this, SLOT(previewStart()));
+    connect(m_canvas->backgroundWorker(), SIGNAL(taskComplete(bool)), this, SLOT(previewComplete(bool)));
+    connect(m_canvas->backgroundWorker(), SIGNAL(progressUpdate(int)), m_progressBar, SLOT(setValue(int)));
 }
 
 MainWindow::~MainWindow()
 {
-    m_backgroundWorker->cancel();
-    delete m_image;
 }
 
 void MainWindow::setupWidgets()
@@ -65,11 +59,8 @@ void MainWindow::setupWidgets()
     this->statusBar()->showMessage("Test");
     this->statusBar()->setSizeGripEnabled(true);
 
-    m_canvas = new QLabel(this);
+    m_canvas = new Canvas(this);
     this->setCentralWidget(m_canvas);
-
-    m_refreshTimer = new QTimer(this);
-    connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(refreshPreview()), Qt::QueuedConnection);
 }
 
 void MainWindow::setupActions()
@@ -267,40 +258,27 @@ void MainWindow::render()
 
 }
 
-void MainWindow::renderPreview()
-{
-    m_progressBar->setValue(0);
-    m_progressBar->setVisible(true);
-    m_refreshTimer->start(100);
-
-    QImage image(QSize(this->m_canvas->width(), this->m_canvas->height()), QImage::Format_RGB888);
-
-    this->stateChanged("calculatingPreview");
-    m_backgroundWorker->run();
-}
-
 void MainWindow::stop()
 {
-    m_backgroundWorker->cancel();
-    m_refreshTimer->stop();
+    //TODO: wire up stop action
 }
 
-void MainWindow::previewComplete()
+void MainWindow::previewStart()
 {
-    m_canvas->setPixmap(QPixmap::fromImage(*m_image));
-    m_refreshTimer->stop();
+    //TODO: only execute previewStart on high quality preview (not sketch)
+    m_progressBar->setVisible(true);
+    this->stateChanged("calculatingPreview");
+}
+
+void MainWindow::previewComplete(bool canceled)
+{
     m_progressBar->setVisible(false);
     this->stateChanged("idle");
 }
 
-void MainWindow::refreshPreview()
-{
-    m_canvas->setPixmap(QPixmap::fromImage(*m_image));
-}
-
 void MainWindow::customColorScheme()
 {
-
+    //TODO: wire up color scheme menu
 }
 
 void MainWindow::saveAs()
@@ -310,27 +288,22 @@ void MainWindow::saveAs()
 
 void MainWindow::zoomIn()
 {
-
+    //TODO: wire up zoom in button
 }
 
 void MainWindow::zoomOut()
 {
-
+    //TODO: wire up zoom out button
 }
 
 void MainWindow::zoomReset()
 {
-
-}
-
-void MainWindow::zoomArea()
-{
-
+    //TODO: wire up zoom reset button
 }
 
 void MainWindow::changeAntiAliasing ( int amount )
 {
-
+    //TODO: wire up antialiasing menu
 }
 
 void MainWindow::changeColorScheme ( QObject* colors )

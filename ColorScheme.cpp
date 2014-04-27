@@ -6,3 +6,5 @@ ColorScheme ColorScheme::Rainbow;
 ColorScheme ColorScheme::YellowBlue;
 ColorScheme ColorScheme::GreenYellow;
 ColorScheme ColorScheme::Grey;
+
+//TODO: implement color schemes

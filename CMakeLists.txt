@@ -6,6 +6,7 @@ find_package(KDE4 REQUIRED)
 include_directories(${KDE4_INCLUDES})
 
 kde4_add_executable(fractal-viewer
+    Canvas.cpp
     main.cpp
     MainWindow.cpp
     ColorScheme.cpp
