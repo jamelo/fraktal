@@ -278,7 +278,7 @@ void MainWindow::previewComplete(bool canceled)
 
 void MainWindow::customColorScheme()
 {
-    //TODO: wire up color scheme menu
+    //TODO: create color scheme dialog
 }
 
 void MainWindow::saveAs()
@@ -309,5 +309,7 @@ void MainWindow::changeAntiAliasing ( int amount )
 void MainWindow::changeColorScheme ( QObject* colors )
 {
     Wrapper<ColorScheme>* colorSchemeWrapper = dynamic_cast<Wrapper<ColorScheme>*>(colors);
+
+    //TODO: wire up color scheme menu
 }
 
