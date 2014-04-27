@@ -179,6 +179,8 @@ void Canvas::refreshPreview()
 {
     QPixmap pixmap;
 
+    //TODO: blit completed lines of image to screen only rather than locking all render threads to copy entire image
+
     {
         std::vector<std::unique_lock<std::mutex>> locks;
 
