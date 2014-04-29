@@ -12,20 +12,33 @@
 
 namespace
 {
-    int mandelbrot(const std::complex<double>& c, int maxIters, double boundary)
+    double mandelbrot(const double c_real, const double c_imag, const int maxIters, const double boundary)
     {
-        std::complex<double> z(0.0, 0.0);
+        const double boundarySqr = boundary * boundary;
+
+        double z_real = c_real;
+        double z_imag = c_imag;
 
         for (int i = 0; i < maxIters; i++) {
-            z = z * z + c;
+            double z_real_sqr = z_real * z_real;
+            double z_imag_sqr = z_imag * z_imag;
+            double z_real_imag = z_real * z_imag;
 
-            if (std::abs(z) > boundary) {
+            double z_mag_sqr = z_real_sqr + z_imag_sqr;
+
+            if (z_mag_sqr > boundarySqr) {
                 return i;
             }
+
+            z_real = z_real_sqr - z_imag_sqr + c_real;
+            z_imag = z_real_imag + z_real_imag + c_imag;
         }
 
         return -1;
     }
+
+    const int ITERS = 64;
+    const int ANTIALIASING = 4;
 }
 
 BackgroundWorker::BackgroundWorker(QWidget* parent) :
@@ -93,6 +106,13 @@ void BackgroundWorker::task(QImage* image, const RenderParams& params, int& curr
     int width = image->width();
     int height = image->height();
     const ZoomRegion& region = params.zoomRegion();
+    int antialiasing = params.antialiasing();
+
+    double recip_antialiasing_plus_1 = 1.0 / (double) (antialiasing + 1);
+    double region_width_over_width_minus_1 = (double) region.width() / (double) (width - 1);
+    double region_height_over_height_minus_1 = (double) region.height() / (double) (height - 1);
+    double recip_iters_minus_1 = 1.0 / (double) (ITERS - 1);
+    double recip_antialiasing_square = 1.0 / (double) (antialiasing * antialiasing);
 
     while (true) {
         {
@@ -112,23 +132,27 @@ void BackgroundWorker::task(QImage* image, const RenderParams& params, int& curr
         {
             std::unique_lock<std::mutex> lock(this->m_threadMutexes[threadIndex]);
 
-            double imag = (double) y / (double) (height - 1) * region.height() + region.location().y();
-
-            //TODO: implement antialiasing
-
             for (int x = 0; x < width; x++) {
-                double real = (double) x / (double) (width - 1) * region.width() + region.location().x();
+                double totalColor = 0;
 
-                std::complex<double> c(real, imag);
+                for (int aay = 0; aay < antialiasing; aay++) {
+                    double y_offset = (double) aay * recip_antialiasing_plus_1 - 0.5;
+                    double imag = ((double) y + y_offset) * region_height_over_height_minus_1 + region.location().y();
 
-                int numIters = mandelbrot(c, 32, 2.0);
+                    for (int aax = 0; aax < antialiasing; aax++) {
+                        double x_offset = (double) aax * recip_antialiasing_plus_1 - 0.5;
+                        double real = ((double) x + x_offset) * region_width_over_width_minus_1 + region.location().x();
 
-                int color = 0;
+                        int numIters = mandelbrot(real, imag, ITERS, 2.0);
 
-                if (numIters >= 0) {
-                    //TODO: use color maps
-                    color = static_cast<int>(std::min((double) numIters / 31.0 * 255.0 + 0.5, 255.0));
+                        if (numIters >= 0) {
+                            //TODO: use color maps
+                            totalColor += (double) numIters * recip_iters_minus_1;
+                        }
+                    }
                 }
+
+                int color = (int) ((double) totalColor * recip_antialiasing_square * 255.0 + 0.5);
 
                 *(QRgb*)pixPtr = qRgb(color, color, color);
                 pixPtr += sizeof(QRgb);
@@ -155,7 +179,7 @@ void BackgroundWorker::run(QImage* image, const RenderParams& params)
             this->task(image, params, currentLine, threadIndex);
         };
 
-        for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
+        for (unsigned int i = 0; i < std::thread::hardware_concurrency(); i++) {
             m_workerThreads.emplace_back(boundTask, i);
         }
 

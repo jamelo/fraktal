@@ -20,13 +20,13 @@ class ZoomRegion
         { }
 
         ZoomRegion(const Point& center, double width, double height) :
-            m_x1(center.x() - width / 2),
-            m_y1(center.y() - height / 2),
-            m_x2(center.x() + width / 2),
-            m_y2(center.y() + height / 2)
+            m_x1(center.x() - width * 0.5),
+            m_y1(center.y() - height * 0.5),
+            m_x2(center.x() + width * 0.5),
+            m_y2(center.y() + height * 0.5)
         { }
 
-        Point center() const     { return Point((m_x1 + m_x2) / 2, (m_y1 + m_y2) / 2); }
+        Point center() const     { return Point((m_x1 + m_x2) * 0.5, (m_y1 + m_y2) * 0.5); }
         Point location() const   { return Point(m_x1, m_y1); }
         double width() const     { return m_x2 - m_x1; }
         double height() const    { return m_y2 - m_y1; }

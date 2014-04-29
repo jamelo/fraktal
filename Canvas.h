@@ -24,7 +24,8 @@ class Canvas : public QLabel
 
         bool m_panning;
         bool m_zooming;
-        QPoint m_dragStart;
+        QPoint m_dragLast;
+        Point m_zoomPivot;
 
         void render();
         void renderSketch();
@@ -34,6 +35,11 @@ class Canvas : public QLabel
         virtual ~Canvas();
 
         BackgroundWorker* backgroundWorker() { return m_worker; }
+
+        int antialiasing();
+        const ColorScheme& colorScheme();
+        void setAntialiasing(int antialiasing);
+        void setColorScheme(const ColorScheme& colors);
 
     protected:
         virtual void resizeEvent(QResizeEvent* event);
@@ -48,6 +54,10 @@ class Canvas : public QLabel
         void resizeTimerExpired();
         void renderComplete(bool canceled);
         void refreshPreview();
+
+    signals:
+        void rendering();
+
 };
 
 #endif

@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QImage>
 #include <QPixmap>
+#include <QApplication>
 
 #include <cassert>
 #include <iostream>
@@ -71,13 +72,33 @@ void Canvas::resizeComplete() {
 }
 
 void Canvas::mouseDoubleClickEvent ( QMouseEvent* event ) {
-    //TODO: double click zooming
-    QWidget::mouseDoubleClickEvent ( event );
+    const double zoom = 1.0 / 4.0;
+
+    double width = (double) m_region.width() * zoom;
+    double height = (double) m_region.height() * zoom;
+
+    double zoomPoint_x = (double) event->pos().x() / (double) this->width() * m_region.width() + m_region.location().x();
+    double zoomPoint_y = (double) event->pos().y() / (double) this->height() * m_region.height() + m_region.location().y();
+
+    m_region = ZoomRegion(Point(zoomPoint_x, zoomPoint_y), width, height);
 }
 
 void Canvas::wheelEvent ( QWheelEvent* event ) {
     if (event->orientation() == Qt::Orientation::Vertical) {
-        //TODO: scroll wheel zooming
+        double zoom = event->delta() > 0 ? 1.0 / 1.25 : 1.25;
+
+        double width = (double) m_region.width() * zoom;
+        double height = (double) m_region.height() * zoom;
+
+        double zoomPoint_x = (double) event->pos().x() / (double) this->width() * m_region.width() + m_region.location().x();
+        double zoomPoint_y = (double) event->pos().y() / (double) this->height() * m_region.height() + m_region.location().y();
+
+        double center_x = zoomPoint_x - (zoomPoint_x - m_region.center().x()) * zoom;
+        double center_y = zoomPoint_y - (zoomPoint_y - m_region.center().y()) * zoom;
+        m_region = ZoomRegion(Point(center_x, center_y), width, height);
+
+        renderSketch();
+        m_resizeTimer->start();
     } else {
         QWidget::wheelEvent ( event );
     }
@@ -87,11 +108,17 @@ void Canvas::mousePressEvent ( QMouseEvent* event ) {
     if (event->button() == Qt::LeftButton) {
         m_panning = true;
         m_zooming = false;
-        m_dragStart = event->pos();
+        m_dragLast = event->pos();
     } else if (event->button() == Qt::RightButton) {
         m_zooming = true;
         m_panning = false;
-        m_dragStart = event->pos();
+        m_dragLast = event->pos();
+
+        double zoomPivot_x = (double) event->pos().x() / (double) this->width() * m_region.width() + m_region.location().x();
+        double zoomPivot_y = (double) event->pos().y() / (double) this->height() * m_region.height() + m_region.location().y();
+        m_zoomPivot = Point(zoomPivot_x, zoomPivot_y);
+
+        QApplication::setOverrideCursor(Qt::BlankCursor);
     }
 }
 
@@ -102,15 +129,17 @@ void Canvas::mouseReleaseEvent ( QMouseEvent* event ) {
     } else if (event->button() == Qt::RightButton) {
         m_zooming = false;
         render();
+
+        QApplication::restoreOverrideCursor();
     }
 }
 
 void Canvas::mouseMoveEvent ( QMouseEvent* event ) {
     if (m_panning) {
-        int mouseDelta_x = event->pos().x() - m_dragStart.x();
-        int mouseDelta_y = event->pos().y() - m_dragStart.y();
+        int mouseDelta_x = event->pos().x() - m_dragLast.x();
+        int mouseDelta_y = event->pos().y() - m_dragLast.y();
 
-        m_dragStart = event->pos();
+        m_dragLast = event->pos();
 
         double delta_x = -(double) mouseDelta_x / (double) this->width() * m_region.width();
         double delta_y = -(double) mouseDelta_y / (double) this->height() * m_region.height();
@@ -122,17 +151,18 @@ void Canvas::mouseMoveEvent ( QMouseEvent* event ) {
     }
 
     if (m_zooming) {
-        int mouseDelta_y = event->pos().y() - m_dragStart.y();
+        int mouseDelta_y = event->pos().y() - m_dragLast.y();
 
-        m_dragStart = event->pos();
+        QCursor::setPos(this->mapToGlobal(m_dragLast));
 
         double zoom = std::exp((double) mouseDelta_y / (double) this->height() * 5.0);
 
-        double width = m_region.width() * zoom;
-        double height = m_region.height() * zoom;
+        double width = (double) m_region.width() * zoom;
+        double height = (double) m_region.height() * zoom;
 
-        //TODO: do math to recalculate center
-        m_region = ZoomRegion(m_region.center(), width, height);
+        double center_x = m_zoomPivot.x() - (m_zoomPivot.x() - m_region.center().x()) * zoom;
+        double center_y = m_zoomPivot.y() - (m_zoomPivot.y() - m_region.center().y()) * zoom;
+        m_region = ZoomRegion(Point(center_x, center_y), width, height);
 
         renderSketch();
     }
@@ -153,6 +183,8 @@ void Canvas::render()
     m_worker->run(&m_image, params);
 
     m_refreshTimer->start();
+
+    emit rendering();
 }
 
 void Canvas::renderSketch()
@@ -199,4 +231,20 @@ void Canvas::refreshPreview()
     }
 }
 
+void Canvas::setAntialiasing ( int antialiasing ) {
+    m_antialiasing = antialiasing;
+    render();
+}
 
+int Canvas::antialiasing() {
+    return m_antialiasing;
+}
+
+void Canvas::setColorScheme ( const ColorScheme& colors ) {
+    m_colors = colors;
+    render();
+}
+
+const ColorScheme& Canvas::colorScheme() {
+    return m_colors;
+}

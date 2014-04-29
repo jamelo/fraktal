@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     this->stateChanged("idle");
 
-    connect(m_canvas->backgroundWorker(), SIGNAL(taskStart()), this, SLOT(previewStart()));
+    connect(m_canvas, SIGNAL(rendering()), this, SLOT(previewStart()));
     connect(m_canvas->backgroundWorker(), SIGNAL(taskComplete(bool)), this, SLOT(previewComplete(bool)));
     connect(m_canvas->backgroundWorker(), SIGNAL(progressUpdate(int)), m_progressBar, SLOT(setValue(int)));
 }
@@ -260,12 +260,11 @@ void MainWindow::render()
 
 void MainWindow::stop()
 {
-    //TODO: wire up stop action
+    m_canvas->backgroundWorker()->cancel();
 }
 
 void MainWindow::previewStart()
 {
-    //TODO: only execute previewStart on high quality preview (not sketch)
     m_progressBar->setVisible(true);
     this->stateChanged("calculatingPreview");
 }
@@ -303,13 +302,13 @@ void MainWindow::zoomReset()
 
 void MainWindow::changeAntiAliasing ( int amount )
 {
-    //TODO: wire up antialiasing menu
+    m_canvas->setAntialiasing(amount);
 }
 
 void MainWindow::changeColorScheme ( QObject* colors )
 {
     Wrapper<ColorScheme>* colorSchemeWrapper = dynamic_cast<Wrapper<ColorScheme>*>(colors);
 
-    //TODO: wire up color scheme menu
+    m_canvas->setColorScheme(colorSchemeWrapper->get());
 }
 
