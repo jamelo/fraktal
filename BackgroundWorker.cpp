@@ -14,6 +14,23 @@ namespace
 {
     double mandelbrot(const double c_real, const double c_imag, const int maxIters, const double boundary)
     {
+        //Test if point is in main cardioid
+        double c_real_minus_quarter = c_real - 0.25;
+        double c_imag_square = c_imag * c_imag;
+        double q =  c_real_minus_quarter * c_real_minus_quarter + c_imag_square;
+        double c1_test = q * (q + c_real_minus_quarter);
+
+        if (c1_test < 0.25 * c_imag_square) {
+            return -1;
+        }
+
+        //Test if point is in period 2 bulb
+        double c_real_plus_1 = c_real + 1;
+
+        if (c_real_plus_1 * c_real_plus_1 + c_imag_square < 1.0 / 16.0) {
+            return -1;
+        }
+
         const double boundarySqr = boundary * boundary;
 
         double z_real = c_real;
@@ -37,7 +54,7 @@ namespace
         return -1;
     }
 
-    const int ITERS = 64;
+    const int ITERS = 256;
     const int ANTIALIASING = 4;
 }
 
@@ -106,7 +123,7 @@ void BackgroundWorker::task(QImage* image, const RenderParams& params, int& curr
     int width = image->width();
     int height = image->height();
     const ZoomRegion& region = params.zoomRegion();
-    int antialiasing = params.antialiasing();
+    int antialiasing = 2;//params.antialiasing();
 
     double recip_antialiasing_plus_1 = 1.0 / (double) (antialiasing + 1);
     double region_width_over_width_minus_1 = (double) region.width() / (double) (width - 1);
@@ -133,7 +150,9 @@ void BackgroundWorker::task(QImage* image, const RenderParams& params, int& curr
             std::unique_lock<std::mutex> lock(this->m_threadMutexes[threadIndex]);
 
             for (int x = 0; x < width; x++) {
-                double totalColor = 0;
+                int totalRed = 0;
+                int totalGreen = 0;
+                int totalBlue = 0;
 
                 for (int aay = 0; aay < antialiasing; aay++) {
                     double y_offset = (double) aay * recip_antialiasing_plus_1 - 0.5;
@@ -145,16 +164,20 @@ void BackgroundWorker::task(QImage* image, const RenderParams& params, int& curr
 
                         int numIters = mandelbrot(real, imag, ITERS, 2.0);
 
-                        if (numIters >= 0) {
-                            //TODO: use color maps
-                            totalColor += (double) numIters * recip_iters_minus_1;
-                        }
+                        //TODO: use color maps
+                        //totalColor += (double) numIters * recip_iters_minus_1;
+                        QColor col = params.colorScheme().calculateColor(numIters, ITERS);
+                        totalRed   += col.red();
+                        totalGreen += col.green();
+                        totalBlue  += col.blue();
                     }
                 }
 
-                int color = (int) ((double) totalColor * recip_antialiasing_square * 255.0 + 0.5);
+                int red   = (int) ((double) totalRed   * recip_antialiasing_square + 0.5);
+                int green = (int) ((double) totalGreen * recip_antialiasing_square + 0.5);
+                int blue  = (int) ((double) totalBlue  * recip_antialiasing_square + 0.5);
 
-                *(QRgb*)pixPtr = qRgb(color, color, color);
+                *(QRgb*)pixPtr = qRgb(red, green, blue);
                 pixPtr += sizeof(QRgb);
             }
         }
@@ -179,6 +202,8 @@ void BackgroundWorker::run(QImage* image, const RenderParams& params)
             this->task(image, params, currentLine, threadIndex);
         };
 
+        std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
+
         for (unsigned int i = 0; i < std::thread::hardware_concurrency(); i++) {
             m_workerThreads.emplace_back(boundTask, i);
         }
@@ -186,6 +211,12 @@ void BackgroundWorker::run(QImage* image, const RenderParams& params)
         for (std::thread& thread : m_workerThreads) {
             thread.join();
         }
+
+        std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+
+        std::chrono::steady_clock::duration duration = end_time - begin_time;
+
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(duration).count() / 1000.0  << " ms" << std::endl;
 
         m_workerThreads.clear();
 
