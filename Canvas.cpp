@@ -13,6 +13,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <cmath>
 
 #include "ZoomRegion.h"
 #include "BackgroundWorker.h"
@@ -29,7 +30,7 @@ Canvas::Canvas ( QWidget* parent ) :
     m_resizeTimer(nullptr),
     m_refreshTimer(nullptr),
     m_region(-2.0, -1.0, 1.0, 1.0),
-    m_colors(ColorScheme::Fire),
+    m_colors(ColorScheme::Rainbow),
     m_antialiasing(1),
     m_worker(nullptr),
     m_image()
@@ -51,7 +52,7 @@ Canvas::Canvas ( QWidget* parent ) :
     m_refreshTimer->setInterval(REFRESH_DELAY);
 
     connect(m_resizeTimer, SIGNAL(timeout()), this, SLOT(resizeTimerExpired()));
-    connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(refreshPreview()));
+    //connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(refreshPreview()));
     connect(m_worker, SIGNAL(taskComplete(bool)), this, SLOT(renderComplete(bool)));
 
     render();
@@ -221,6 +222,12 @@ void Canvas::refreshPreview()
         }
 
         pixmap = QPixmap::fromImage(m_image);
+
+        /*QImage partialImage(m_image.data_ptr(), m_image.width(), m_linesCompleted, m_image.bytesPerLine(), m_image.format());
+        pixmap = QPixmap::fromImage(partialImage);
+        QPixmap pixmap2(m_image.width(), m_image.height());
+        pixmap2.fill(Qt::black);
+        pixmap2.loadFromData(m_image.data_ptr(), m_image.format(), Qt::)*/
     }
 
     if (pixmap.width() == this->width() && pixmap.height() == this->height()) {
